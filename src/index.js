@@ -1,26 +1,53 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import {ApolloClient, InMemoryCache, ApolloProvider, gql} from '@apollo/client'
+import {ApolloClient, ApolloLink, HttpLink, InMemoryCache, ApolloProvider} from '@apollo/client'
+import {onError} from '@apollo/client/link/error'
 
-import './index.css';
+import './style.css';
 import App from './App';
+
 import reportWebVitals from './reportWebVitals';
+
+//console.log('sss')
 
 const GITHUB_BASE_URL = 'https://api.github.com/graphql'
 
-const client = new ApolloClient({
-	uri: GITHUB_BASE_URL,
-	cache: new InMemoryCache(),
-	headers: {
-		authorization: `Bearer ${process.env.REACT_APP_GITHUB_PERSONAL_ACCESS_TOKEN}`
+const errorLink = onError(({graphQLErrors, networkError}) => {
+	if(graphQLErrors){
+
 	}
+
+	if(networkError){
+
+	}
+})
+
+const httpLink = new HttpLink({
+	uri: GITHUB_BASE_URL,
+	headers: {
+		authorization: `Bearer ${
+			process.env.REACT_APP_GITHUB_PERSONAL_ACCESS_TOKEN
+		}`
+	}
+})
+
+const link = new ApolloLink.from([errorLink, httpLink])
+
+
+const cache = new InMemoryCache();
+
+const client = new ApolloClient({
+	cache,
+	link
 })
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
 	<React.StrictMode>
-		<App />
+		<ApolloProvider client={client}>
+			<App />
+		</ApolloProvider>
 	</React.StrictMode>
 );
 
