@@ -6,17 +6,19 @@ import Button  from '../../Button'
 
 import '../style.css'
 
-const STAR_REPOSITORY = gql`
-    mutation($id:ID!){
-        addStar(input: {starrableId: $id}){
-            starrable {
-                id
-                viewerHasStarred
-            }
-        }
-    }
-`;
+import {
+    STAR_REPOSITORY,
+    UNSTAR_REPOSITORY,
+    WATCH_REPOSITORY
+} from '../mutations'
 
+const VIEWER_SUBSCRIPTIONS = {
+    SUBSCRIBED: 'SUBSCRIBED',
+    UNSUBSCRIBED: 'UNSUBSCRIBED'
+}
+
+const isWatch = viewerSubscription => 
+    viewerSubscription === VIEWER_SUBSCRIPTIONS.SUBSCRIBED;
 
 const RepositoryItem = ({
     id,
@@ -30,8 +32,27 @@ const RepositoryItem = ({
     viewerSubscription,
     viewerHasStarred
 }) => {
+    const [addStar, {addData, addLoading, addError}] = useMutation(STAR_REPOSITORY)
+    const [removeStar, {removeData, removeLoading, removeError}] = useMutation(UNSTAR_REPOSITORY)
+    const [updateSubscription, {subscribeData, subscribeLoading, subscribeError}] = useMutation(WATCH_REPOSITORY)
 
-    const [addStar, {data, loading, error}] = useMutation(STAR_REPOSITORY)
+    const handleAction = (mutationFn, subscribeFn=false) => e => {
+        e.preventDefault()
+        if(subscribeFn){
+            updateSubscription({
+                variables: {
+                    id: id,
+                    viewerSubscription: isWatch(viewerSubscription) 
+                        ? VIEWER_SUBSCRIPTIONS.UNSUBSCRIBED
+                        : VIEWER_SUBSCRIPTIONS.SUBSCRIBED,
+                }
+            });
+        }else{
+            mutationFn({
+                variables: { id: id },
+            });
+        }
+    }
 
     return (
         <div>
@@ -40,22 +61,32 @@ const RepositoryItem = ({
                     <Link href={url}>{name}</Link>
                 </h2>
                 <div>
+                    <Button
+                        className="RepositoryItem-title-action"
+                        data-test-id="updateSubscription"
+                        onClick={handleAction(null, true)}
+                        disabled={subscribeLoading}>
+                        {watchers.totalCount}{' '}
+                        {isWatch(viewerSubscription)? 'Unwatch' : 'Watch'}
+                    </Button>
+
                     {!viewerHasStarred ? (
                         <Button
-                            className={'RepositoryItem-title-action'}
-                            onClick={e => {
-                                e.preventDefault();
-                                addStar({variables: {
-                                    id: id,
-                                }})
-                            }}>
+                            className='RepositoryItem-title-action'
+                            onClick={handleAction(addStar)}
+                            disabled={addLoading}>
                             {stargazers.totalCount} Star
                         </Button>
                     ): (
-                        <span></span>
-                    )
+                        <Button
+                            className='RepositoryItem-title-action'
+                            onClick={handleAction(removeStar)}
+                            disabled={removeLoading}>
+                            {stargazers.totalCount} UnStar
+                        </Button>
+                    )}
 
-                    }
+                    {/** Here comes your updateSubscription mutation*/}
                 </div>
             </div>
             <div className='RepositoryItem-description'>
