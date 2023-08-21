@@ -1,6 +1,7 @@
 import React from 'react'
-import { gql, useMutation } from '@apollo/client'
+import {useMutation } from '@apollo/client'
 
+import REPOSITORY_FRAGMENT from '../fragments'
 import Link from '../../Link'
 import Button  from '../../Button'
 
@@ -20,6 +21,26 @@ const VIEWER_SUBSCRIPTIONS = {
 const isWatch = viewerSubscription => 
     viewerSubscription === VIEWER_SUBSCRIPTIONS.SUBSCRIBED;
 
+const getUpdatedStarData = (client, id, viewerHasStarred) => {
+    const repository = client.readFragment({
+        id: `Repository:${id}`,
+        fragment: REPOSITORY_FRAGMENT
+    })
+
+    console.log(repository)
+
+    let {totalCount} = repository.stargazers
+    totalCount = viewerHasStarred? totalCount + 1: totalCount - 1
+
+    return {
+        ...repository,
+        stargazers: {
+            ...repository.stargazers,
+            totalCount,
+        },
+    }
+}
+
 const RepositoryItem = ({
     id,
     name,
@@ -32,9 +53,49 @@ const RepositoryItem = ({
     viewerSubscription,
     viewerHasStarred
 }) => {
-    const [addStar, {addData, addLoading, addError}] = useMutation(STAR_REPOSITORY)
-    const [removeStar, {removeData, removeLoading, removeError}] = useMutation(UNSTAR_REPOSITORY)
-    const [updateSubscription, {subscribeData, subscribeLoading, subscribeError}] = useMutation(WATCH_REPOSITORY)
+    const [addStar, {addData, addLoading, addError}] = useMutation(STAR_REPOSITORY, {
+        update(client, { data: {addStar: {starrable: { id, viewerHasStarred } } } }) {
+            client.writeFragment({
+                id: `Repository:${id}`,
+                fragment: REPOSITORY_FRAGMENT,
+                data: getUpdatedStarData(client, id, viewerHasStarred)
+            })
+        }
+    })
+    const [removeStar, {removeData, removeLoading, removeError}] = useMutation(UNSTAR_REPOSITORY, {
+        update(client, { data: { removeStar: {starrable: {id, viewerHasStarred } } } }){
+            client.writeFragment({
+                id: `Repository:${id}`,
+                fragment: REPOSITORY_FRAGMENT,
+                data: getUpdatedStarData(client, id, viewerHasStarred)
+            })
+        }
+    })
+    const [updateSubscription, {subscribeData, subscribeLoading, subscribeError}] = useMutation(WATCH_REPOSITORY, {
+        update(client, { data: { updateSubscription: { subscribable: { id, viewerSubscription } } } }){
+            const repository = client.readFragment({
+                id: `Repository:${id}`,
+                fragment: REPOSITORY_FRAGMENT
+            })
+
+            let {totalCount} = repository.watchers;
+            totalCount = viewerSubscription === VIEWER_SUBSCRIPTIONS.SUBSCRIBED 
+                ? totalCount + 1 
+                : totalCount - 1
+
+            client.writeFragment({
+                id: `Repository:${id}`,
+                fragment: REPOSITORY_FRAGMENT,
+                data: {
+                    ...repository,
+                    watchers: {
+                        ...repository.watchers,
+                        totalCount
+                    }
+                }
+            })
+        }
+    })
 
     const handleAction = (mutationFn, subscribeFn=false) => e => {
         e.preventDefault()
