@@ -54,6 +54,17 @@ const RepositoryItem = ({
     viewerHasStarred
 }) => {
     const [addStar, {addData, addLoading, addError}] = useMutation(STAR_REPOSITORY, {
+        variables: { id: id },
+        optimisticResponse: {
+            addStar: {
+                __typename: 'Mutation',
+                starrable: {
+                    __typename: 'Repository',
+                    id,
+                    viewerHasStarred: !viewerHasStarred
+                }
+            }
+        },
         update(client, { data: {addStar: {starrable: { id, viewerHasStarred } } } }) {
             client.writeFragment({
                 id: `Repository:${id}`,
@@ -63,6 +74,17 @@ const RepositoryItem = ({
         }
     })
     const [removeStar, {removeData, removeLoading, removeError}] = useMutation(UNSTAR_REPOSITORY, {
+        variables: { id: id },
+        optimisticResponse: {
+            removeStar: {
+                __typename: 'Mutation',
+                starrable: {
+                    __typename: 'Repository',
+                    id,
+                    viewerHasStarred: !viewerHasStarred
+                }
+            }
+        },
         update(client, { data: { removeStar: {starrable: {id, viewerHasStarred } } } }){
             client.writeFragment({
                 id: `Repository:${id}`,
@@ -72,6 +94,24 @@ const RepositoryItem = ({
         }
     })
     const [updateSubscription, {subscribeData, subscribeLoading, subscribeError}] = useMutation(WATCH_REPOSITORY, {
+        variables: {
+            id: id,
+            viewerSubscription: isWatch(viewerSubscription) 
+                ? VIEWER_SUBSCRIPTIONS.UNSUBSCRIBED
+                : VIEWER_SUBSCRIPTIONS.SUBSCRIBED,
+        },
+        optimisticResponse: {
+            updateSubscription: {
+                __typename: 'Mutation',
+                subscribable: {
+                    __typename: 'Repository',
+                    id,
+                    viewerSubscription: isWatch(viewerSubscription) 
+                        ? VIEWER_SUBSCRIPTIONS.UNSUBSCRIBED
+                        : VIEWER_SUBSCRIPTIONS.SUBSCRIBED,
+                }
+            }
+        },
         update(client, { data: { updateSubscription: { subscribable: { id, viewerSubscription } } } }){
             const repository = client.readFragment({
                 id: `Repository:${id}`,
@@ -99,20 +139,8 @@ const RepositoryItem = ({
 
     const handleAction = (mutationFn, subscribeFn=false) => e => {
         e.preventDefault()
-        if(subscribeFn){
-            updateSubscription({
-                variables: {
-                    id: id,
-                    viewerSubscription: isWatch(viewerSubscription) 
-                        ? VIEWER_SUBSCRIPTIONS.UNSUBSCRIBED
-                        : VIEWER_SUBSCRIPTIONS.SUBSCRIBED,
-                }
-            });
-        }else{
-            mutationFn({
-                variables: { id: id },
-            });
-        }
+        if(subscribeFn){ updateSubscription();}
+        else{ mutationFn();}
     }
 
     return (
