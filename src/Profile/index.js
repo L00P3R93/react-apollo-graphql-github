@@ -45,7 +45,8 @@ const Profile = () => {
     return <RepositoryList 
                 loading={loading}
                 repositories={viewer.repositories} 
-                fetchMore={fetchMore}/>
+                fetchMore={fetchMore}
+                entry={'viewer'}/>
 }
 
 export default Profile;
