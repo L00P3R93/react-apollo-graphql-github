@@ -8,16 +8,21 @@ import Loading from '../Loading'
 import ErrorMessage from "../Error";
 
 const GET_REPOSITORIES_OF_CURRENT_USER = gql`
-    query {
+    query($cursor: String) {
         viewer {
             repositories(
                 first: 5 
                 orderBy: {direction: DESC, field: STARGAZERS}
+                after: $cursor
             ){
                 edges {
                     node {
                         ...repository
                     }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
                 }
             }
         }
@@ -27,7 +32,9 @@ const GET_REPOSITORIES_OF_CURRENT_USER = gql`
 `;
 
 const Profile = () => {
-    const {loading, error, data} = useQuery(GET_REPOSITORIES_OF_CURRENT_USER)
+    const {loading, error, data, fetchMore} = useQuery(GET_REPOSITORIES_OF_CURRENT_USER, {
+        notifyOnNetworkStatusChange: true
+    })
     console.log(loading, error, data)
 
     if(loading) return <Loading />
@@ -35,7 +42,10 @@ const Profile = () => {
     
     const {viewer} = data
     console.log(viewer);
-    return <RepositoryList repositories={viewer.repositories} />
+    return <RepositoryList 
+                loading={loading}
+                repositories={viewer.repositories} 
+                fetchMore={fetchMore}/>
 }
 
 export default Profile;
