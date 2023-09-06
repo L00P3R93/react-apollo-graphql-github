@@ -24,13 +24,14 @@ const GET_REPOSITORIES_OF_ORGANIZATION = gql`
     ${REPOSITORY_FRAGMENT}
 `;
 
-const Organization = ({organizationName}) => {
-    let skipQuery = (organizationName === '')? true: false;
+const Organization = ({ organizationName }) => {
+    //let skipQuery = (organizationName === '')? true: false;
     const {loading, error, data, fetchMore} = useQuery(GET_REPOSITORIES_OF_ORGANIZATION, {
-        variables: organizationName,
-        //skip: skipQuery,
+        variables: {organizationName},
         notifyOnNetworkStatusChange: true,
     })
+
+    console.log(loading, error, data)
 
     if(loading) return <Loading />
     if(error) return <ErrorMessage error={error} />

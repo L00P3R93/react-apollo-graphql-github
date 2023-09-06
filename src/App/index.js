@@ -8,6 +8,8 @@ import Footer from "./Footer";
 
 import * as routes from '../constants/routes'
 
+import './style.css'
+
 class App extends Component {
     state = {
         organizationName: 'the-road-to-learn-react'
@@ -18,7 +20,7 @@ class App extends Component {
     };
 
     render() {
-        const {organizationName} = this.props
+        const {organizationName} = this.state
 
         return (
             <Router>
