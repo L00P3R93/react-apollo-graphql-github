@@ -24,6 +24,12 @@ const GET_REPOSITORIES_OF_ORGANIZATION = gql`
     ${REPOSITORY_FRAGMENT}
 `;
 
+/**
+ * Renders the organization component.
+ *
+ * @param {Object} organizationName - The name of the organization.
+ * @return {JSX.Element} The rendered organization component.
+ */
 const Organization = ({ organizationName }) => {
     //let skipQuery = (organizationName === '')? true: false;
     const {loading, error, data, fetchMore} = useQuery(GET_REPOSITORIES_OF_ORGANIZATION, {

@@ -19,6 +19,11 @@ class App extends Component {
         this.setState({organizationName: value})
     };
 
+    /**
+     * Renders the component and returns the JSX.
+     *
+     * @return {JSX} The JSX representing the component.
+     */
     render() {
         const {organizationName} = this.state
 
