@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
+import { useQuery, ApolloConsumer } from "@apollo/client";
 import { withState } from "recompose";
 
 import { GET_ISSUES_OF_REPOSITORY } from "./queries";
@@ -30,6 +30,21 @@ const TRANSITION_STATE = {
 }
 
 const isShow = issueState => issueState !== ISSUE_STATES.NONE;
+
+const prefetchIssues = (client, repositoryOwner, repositoryName, issueState) => {
+    const nextIssueState = TRANSITION_STATE[issueState]
+
+    if(isShow(nextIssueState)){
+        client.query({
+            query: GET_ISSUES_OF_REPOSITORY,
+            variables: {
+                repositoryOwner,
+                repositoryName,
+                issueState: nextIssueState
+            }
+        })
+    }
+}
 
 const updateQuery = (previousResult, { fetchMoreResult }) => {
     if (!fetchMoreResult) {
@@ -66,9 +81,9 @@ const Issues = ({ repositoryOwner, repositoryName, issueState, onChangeIssueStat
         variables: { repositoryOwner, repositoryName, issueState },
     });
 
-    console.log("Loading:", loading);
-    console.log("Error:", error);
-    console.log("Data:", data);
+    //console.log("Loading:", loading);
+    //console.log("Error:", error);
+    //console.log("Data:", data);
 
     if (loading) {
         return <Loading />;
@@ -79,7 +94,7 @@ const Issues = ({ repositoryOwner, repositoryName, issueState, onChangeIssueStat
     }
 
     const { repository } = data;
-    console.log("Repository:", repository);
+    //console.log("Repository:", repository);
 
     const filteredRepository = {
         issues: {
@@ -98,19 +113,20 @@ const Issues = ({ repositoryOwner, repositoryName, issueState, onChangeIssueStat
 
     return (
         <div className="Issues">
-        <ButtonUnobtrusive
-            onClick={() => onChangeIssueState(TRANSITION_STATE[issueState])}
-        >
-            {TRANSITION_LABELS[issueState]}
-        </ButtonUnobtrusive>
-        {isShow(issueState) && <IssueList 
-                                    issues={repository.issues}
-                                    loading={loading}
-                                    repositoryOwner={repositoryOwner}
-                                    repositoryName={repositoryName}
-                                    issueState={issueState}
-                                    fetchMore={fetchMore}   
-                                />}
+            <IssueFilter 
+                repositoryOwner={repositoryOwner}
+                repositoryName={repositoryName}
+                issueState={issueState}
+                onChangeIssueState={onChangeIssueState}
+            />
+            {isShow(issueState) && <IssueList 
+                                        issues={repository.issues}
+                                        loading={loading}
+                                        repositoryOwner={repositoryOwner}
+                                        repositoryName={repositoryName}
+                                        issueState={issueState}
+                                        fetchMore={fetchMore}   
+                                    />}
         </div>
     );
 };
@@ -152,8 +168,27 @@ const IssueList = ({issues, loading, repositoryOwner, repositoryName, issueState
     </div>
 )
 
+const IssueFilter = ({ repositoryOwner, repositoryName, issueState, onChangeIssueState }) => (
+    <ApolloConsumer>
+        {client => (
+            <ButtonUnobtrusive
+                onClick={() => onChangeIssueState(TRANSITION_STATE[issueState])}
+                onMouseOver={prefetchIssues(
+                    client,
+                    repositoryOwner,
+                    repositoryName,
+                    issueState
+                )}
+            >
+                {TRANSITION_LABELS[issueState]}
+            </ButtonUnobtrusive>
+        )}
+    </ApolloConsumer>
+    
+)
+
 export default withState(
     "issueState",
     "onChangeIssueState", 
-    ISSUE_STATES.NONE
+    ISSUE_STATES.OPEN
 )(Issues);
