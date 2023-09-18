@@ -31,20 +31,6 @@ const TRANSITION_STATE = {
 
 const isShow = issueState => issueState !== ISSUE_STATES.NONE;
 
-const prefetchIssues = (client, repositoryOwner, repositoryName, issueState) => {
-    const nextIssueState = TRANSITION_STATE[issueState]
-
-    if(isShow(nextIssueState)){
-        client.query({
-            query: GET_ISSUES_OF_REPOSITORY,
-            variables: {
-                repositoryOwner,
-                repositoryName,
-                issueState: nextIssueState
-            }
-        })
-    }
-}
 
 const updateQuery = (previousResult, { fetchMoreResult }) => {
     if (!fetchMoreResult) {
@@ -61,11 +47,36 @@ const updateQuery = (previousResult, { fetchMoreResult }) => {
                 edges: [
                     ...previousResult.repository.issues.edges,
                     ...fetchMoreResult.repository.issues.edges
-                ]
+                ],
+            },
+        },
+    };
+};
+
+/**
+ * Fetches issues from a repository based on the provided parameters.
+ *
+ * @param {object} client - The GraphQL client.
+ * @param {string} repositoryOwner - The owner of the repository.
+ * @param {string} repositoryName - The name of the repository.
+ * @param {string} issueState - The state of the issues to fetch.
+ * @return {void}
+ */
+const prefetchIssues = (client, repositoryOwner, repositoryName, issueState) => {
+    const nextIssueState = TRANSITION_STATE[issueState]
+
+    if(isShow(nextIssueState)){
+        client.query({
+            query: GET_ISSUES_OF_REPOSITORY,
+            variables: {
+                repositoryOwner,
+                repositoryName,
+                issueState: nextIssueState
             }
-        }
+        })
     }
 }
+
 /**
  * Renders a list of issues for a given repository.
  *
@@ -131,7 +142,34 @@ const Issues = ({ repositoryOwner, repositoryName, issueState, onChangeIssueStat
     );
 };
 
-
+/**
+ * Generates a function comment for the given function body.
+ *
+ * @param {Object} props - The props for the IssueFilter component.
+ * @param {string} props.repositoryOwner - The owner of the repository.
+ * @param {string} props.repositoryName - The name of the repository.
+ * @param {string} props.issueState - The state of the issue.
+ * @param {function} props.onChangeIssueState - The function to handle the change of issue state.
+ * @return {JSX.Element} The IssueFilter component.
+ */
+const IssueFilter = ({ repositoryOwner, repositoryName, issueState, onChangeIssueState }) => (
+    <ApolloConsumer>
+        {client => (
+            <ButtonUnobtrusive
+                onClick={() => onChangeIssueState(TRANSITION_STATE[issueState])}
+                onMouseOver={prefetchIssues(
+                    client,
+                    repositoryOwner,
+                    repositoryName,
+                    issueState
+                )}
+            >
+                {TRANSITION_LABELS[issueState]}
+            </ButtonUnobtrusive>
+        )}
+    </ApolloConsumer>
+    
+)
 
 /**
  * Renders a list of issues.
@@ -166,25 +204,6 @@ const IssueList = ({issues, loading, repositoryOwner, repositoryName, issueState
             Issues
         </FetchMore>
     </div>
-)
-
-const IssueFilter = ({ repositoryOwner, repositoryName, issueState, onChangeIssueState }) => (
-    <ApolloConsumer>
-        {client => (
-            <ButtonUnobtrusive
-                onClick={() => onChangeIssueState(TRANSITION_STATE[issueState])}
-                onMouseOver={prefetchIssues(
-                    client,
-                    repositoryOwner,
-                    repositoryName,
-                    issueState
-                )}
-            >
-                {TRANSITION_LABELS[issueState]}
-            </ButtonUnobtrusive>
-        )}
-    </ApolloConsumer>
-    
 )
 
 export default withState(
