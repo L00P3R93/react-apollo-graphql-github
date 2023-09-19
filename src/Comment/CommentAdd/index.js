@@ -6,6 +6,7 @@ import { ADD_COMMENT } from "./mutations";
 import TextArea from '../../TextArea';
 import Button from "../../Button";
 import ErrorMessage from "../../Error";
+import Loading from "../../Loading";
 
 const CommentAdd = ({ issueId }) => {
     const [value, setValue] = React.useState('');
@@ -20,13 +21,14 @@ const CommentAdd = ({ issueId }) => {
         event.preventDefault();
     }
 
-    const [addComment, { loading, error, data }] = useMutation(ADD_COMMENT, {
+    const [addComment, { loading, error }] = useMutation(ADD_COMMENT, {
         variables: { subjectId: issueId, body: value },
     })
 
     return (
         <div>
             {error && <ErrorMessage error={error} />}
+            {loading && <Loading />}
             <form onSubmit={e => handleSubmit(e, addComment)}>
                 <TextArea 
                     value={value}
