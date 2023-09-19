@@ -17,6 +17,6 @@
 
 @media only screen and (max-device-width: 480px) {
     .Issues-content {
-    align-items: center;
+        align-items: center;
     }
 }
