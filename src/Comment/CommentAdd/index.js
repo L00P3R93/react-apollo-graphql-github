@@ -14,9 +14,9 @@ const CommentAdd = ({ issueId }) => {
         setValue(newValue) 
     }
 
-    const handleSubmit = async (event, addComment) => {
-        await addComment();
-        setValue('');
+    const handleSubmit = (event, addComment) => {
+        addComment().then(() => this.setState({ value: '' }));
+
         event.preventDefault();
     }
 

@@ -186,7 +186,12 @@ const IssueList = ({issues, loading, repositoryOwner, repositoryName, issueState
     <div className="IssueList">
         {/* Map over the list of issues and render each one */}
         {issues.edges.map(({node}) => (
-            <IssueItem key={node.id} issue={node} />
+            <IssueItem 
+                key={node.id} 
+                issue={node} 
+                repositoryOwner={repositoryOwner} 
+                repositoryName={repositoryName}
+            />
         ))}
 
         <FetchMore 

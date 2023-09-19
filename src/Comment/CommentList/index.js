@@ -3,7 +3,7 @@ import React, { Fragment } from 'react'
 import { useQuery } from '@apollo/client'
 
 import { GET_COMMENTS_OF_ISSUE } from './queries'
-import CommentItem from '../CommentItem'
+import Comment from '../CommentItem'
 import CommentAdd from '../CommentAdd';
 
 import Loading from '../../Loading';
@@ -42,10 +42,16 @@ const Comments = ({ repositoryOwner, repositoryName, issue }) => {
         notifyOnNetworkStatusChange: true,
     })
 
-    if(error) return <ErrorMessage error={error} />
-    if(loading) return <Loading />
+    if (error) {
+        console.error(error);
+        return <ErrorMessage error={error} />;
+    }
+    if (loading) {
+        console.log('Loading comments...');
+        return <Loading />;
+    }
 
-    const {repository} = data
+    const { repository } = data;
     console.log(repository);
 
     return (
@@ -61,7 +67,7 @@ const Comments = ({ repositoryOwner, repositoryName, issue }) => {
 
             <CommentAdd issueId={repository.issue.id} />
         </Fragment>
-    )
+    );
 }
 
 const CommentList = ({
@@ -74,7 +80,7 @@ const CommentList = ({
 }) => (
     <div className='CommentList'>
         {comments.edges.map(({node}) => (
-            <CommentItem key={node.id} comment={node} />
+            <Comment key={node.id} comment={node} />
         ))}
         <FetchMore
             loading={loading}

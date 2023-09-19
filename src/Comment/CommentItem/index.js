@@ -1,5 +1,7 @@
 import React from "react";
 
+import './style.css'
+
 const Comment = ({comment}) => 
     <div className="CommentItem">
         <div>{comment.author.login}:</div>
